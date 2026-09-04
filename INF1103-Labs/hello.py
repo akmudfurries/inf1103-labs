@@ -4,7 +4,7 @@
 # print("================")
 
 username = input("Enter Username: ")
-age = input("Enter age: ")
+age = int(input("Enter age: "))
 category = input("Enter Content Category: ")
 
 print("\n Instagram Profile")
