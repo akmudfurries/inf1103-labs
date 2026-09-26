@@ -1,28 +1,29 @@
-TotalUnitsProcessed = 0
+total_entries = 0
 failedEntries = 0
 run = True
 
-
-
-
-
-def get_valid_input():
-    global failedEntries
+def get_valid_input(failedEntries, total_entries):
 
     while True:
+
         product_name = input("Enter product name (or 'quit' to exit): ")
 
         if product_name == "quit":
-            return "quit", 0
+            total_units = save_inventory(inventory)
+            generate_report(total_units, failedEntries, total_entries)
+            break
         
         stock_quantity = input("Enter quantity: ")
 
         if stock_quantity.isdigit() and int(stock_quantity) > 0:
-            return product_name, stock_quantity
+            add_product(inventory, product_name, stock_quantity)
+            total_entries += 1
+            # return product_name, stock_quantity, failedEntries
         
         else:
             print("Invalid! Enter ONLY positive numbers.")
             failedEntries += 1
+            
 
 def load_inventory():
     with open('inventory.txt', 'r') as file:
@@ -59,33 +60,43 @@ def add_product(inventory, name, amount):
     return inventory
 
 def save_inventory(inventory):
-    with open("inventory.txt", "w") as file:
+    with open("inventory.txt", "w+") as file:
         file.write(str(inventory))
+
+        total_units = sum(int(item[2]) for item in inventory)
+
+
+        return total_units
     
         
+
+def generate_report(total_units, failed_attempts, total_entries):
+    while True:
+        print("\n=============== AUDIT REPORT ===============")
+        print("Total Transactions Recorded: ", total_entries)
+        print("Total Units Processed:", total_units)
+        print("Number of Failed/Rejected Entries:", failed_attempts)
+        break
+
+
 # def calculate_tax(amount):
 #     tax = amount * 0.10
 #     return tax
 
 
-def generate_report(total_units, failed_attempts):
-    print("\n===== AUDIT REPORT =====")
-    print("Total Units Processed:", total_units)
-    print("Number of Failed/Rejected Entries:", failed_attempts)
-
-
 inventory = load_inventory()
 
-while run:
-    product_name, stock_quantity = get_valid_input()
+failedEntries = get_valid_input(failedEntries, total_entries)
 
-    if product_name == "quit":
-        save_inventory(inventory)
-        load_inventory()
-        break
+    # if product_name == "quit":
+    #     save_inventory(inventory)
+    #     total_units = save_inventory(inventory)
+    #     load_inventory()
+    #     generate_report(total_units, failedEntries)
+    #     break
 
-    else:
-        add_product(inventory, product_name, stock_quantity)
+    # else:
+    #     add_product(inventory, product_name, stock_quantity)
         
 
         # inventory = process_delivery(inventory, product_name)
