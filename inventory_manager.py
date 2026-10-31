@@ -1,13 +1,26 @@
 import json
 from pathlib import Path
 
+from can_be_shipped import CanBeShipped
+from digital_product import DigitalProduct
 from inventory import Inventory
-from product import Product
+from physical_product import PhysicalProduct
 
 INVENTORY_FILE = Path(__file__).with_name("inventory.json")
 
+PRODUCT_TYPES = {
+    "physical": PhysicalProduct,
+    "digital": DigitalProduct,
+}
 
-# Handling file
+
+def create_product_from_dict(data):
+    product_class = PRODUCT_TYPES.get(data.get("type"))
+    if product_class is None:
+        raise ValueError(f"unknown or missing product type: {data.get('type')!r}")
+    return product_class.from_dict(data)
+
+
 def load_inventory():
     inventory = Inventory()
 
@@ -27,8 +40,8 @@ def load_inventory():
 
         for item in data.get("products", []):
             try:
-                inventory.add_product(Product.from_dict(item))
-            except (KeyError, TypeError, ValueError) as error:
+                inventory.add_product(create_product_from_dict(item))
+            except (KeyError, TypeError, AttributeError, ValueError) as error:
                 print(f"Skipping invalid product entry: {error}")
 
         print("Inventory loaded successfully.")
@@ -51,7 +64,6 @@ def save_inventory(inventory):
         return False
 
 
-# ---------------- Menu actions (user input) ----------------
 def add_product(inventory):
     print("Add New Product")
 
@@ -64,6 +76,15 @@ def add_product(inventory):
         print("A product with that ID already exists.")
         return
 
+    print("Product type:")
+    print("1. Physical")
+    print("2. Digital")
+    product_type = input("Choose type: ").strip()
+
+    if product_type not in ("1", "2"):
+        print("Invalid product type.")
+        return
+
     name = input("Product Name: ").strip()
     if not name:
         print("Product name cannot be empty.")
@@ -72,11 +93,16 @@ def add_product(inventory):
     try:
         price = float(input("Price: "))
         stock = int(input("Stock Quantity: "))
-        product = Product(product_id, name, price, stock)
+
+        if product_type == "1":
+            weight = float(input("Weight (kg): "))
+            product = PhysicalProduct(product_id, name, price, stock, weight)
+        else:
+            download_size = float(input("Download size (MB): "))
+            product = DigitalProduct(product_id, name, price, stock, download_size)
     except ValueError:
         print(
-            "Enter a non-negative price and a "
-            "non-negative whole-number stock quantity."
+            "Enter non-negative numbers, with a whole-number stock quantity."
         )
         return
 
@@ -116,10 +142,14 @@ def search_and_display(inventory):
     print("Product Found")
     print("-" * 48)
     product.display_information()
+    print(product.get_fulfilment_info())
+
+    if isinstance(product, CanBeShipped):
+        print(f"Shipping cost: ${product.calculate_shipping_cost():.2f}")
+
     print("-" * 48)
 
 
-# ---------------- Main program ----------------
 def main():
     print("=" * 40)
     print("INVENTORY MANAGEMENT SYSTEM")

@@ -1,5 +1,7 @@
-class Product:
-    """Represents and manages a single product (SRP)."""
+from abc import ABC, abstractmethod
+
+
+class Product(ABC):
 
     def __init__(self, product_id, name, price, stock):
         product_id = str(product_id).strip()
@@ -18,9 +20,8 @@ class Product:
         self.__name = name
         self.__price = price
         self.__stock = 0
-        self.update_stock(stock)  # reuse validation
+        self.update_stock(stock)
 
-    # Read-only access to the private attributes
     @property
     def product_id(self):
         return self.__product_id
@@ -38,7 +39,6 @@ class Product:
         return self.__stock
 
     def update_stock(self, quantity):
-        """Set the stock level. Product decides what is a valid value."""
         if isinstance(quantity, bool) or not isinstance(quantity, int) or quantity < 0:
             raise ValueError("Stock must be a non-negative whole number.")
         self.__stock = quantity
@@ -50,7 +50,6 @@ class Product:
         )
 
     def to_dict(self):
-        """Convert to a dictionary so the main program can save it as JSON."""
         return {
             "id": self.__product_id,
             "name": self.__name,
@@ -58,7 +57,6 @@ class Product:
             "stock": self.__stock,
         }
 
-    @classmethod
-    def from_dict(cls, data):
-        """Build a Product from a dictionary loaded from JSON."""
-        return cls(data["id"], data["name"], data["price"], data["stock"])
+    @abstractmethod
+    def get_fulfilment_info(self):
+        pass
